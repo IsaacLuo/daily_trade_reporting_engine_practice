@@ -48,20 +48,22 @@ def grab_currency_data_from_internet():
     """
     try:
         import secret
+        http_connection = http.client.HTTPConnection('www.apilayer.net')
+        http_connection.request(
+            'GET', '/api/live?access_key={}'.format(secret.access_key))
+        response = http_connection.getresponse()
+        if response.status != 200:
+            raise RuntimeError('internet issue')
+
+        return json.loads(response.read().decode('utf-8'))['quotes']
     except ImportError:
         print('Missing config.py, if you just cloned this repo, please rename\
             the config.example.py to config.py and set access_key. To get the\
             key, please go to https://currencylayer.com/')
         raise
-
-    http_connection = http.client.HTTPConnection('www.apilayer.net')
-    http_connection.request(
-        'GET', '/api/live?access_key={}'.format(secret.access_key))
-    response = http_connection.getresponse()
-    if response.status != 200:
-        raise RuntimeError('internet issue')
-
-    return json.loads(response.read().decode('utf-8'))['quotes']
+    except RuntimeError:
+        print('Failed to get data from Internet, please check the network')
+        raise
     
 def convert_currency_format(currency_data):
     """
